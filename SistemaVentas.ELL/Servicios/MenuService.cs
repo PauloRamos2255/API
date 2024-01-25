@@ -1,0 +1,58 @@
+﻿using SistemaVentas.ELL.Servicios.Contrato;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using AutoMapper;
+using SistemaVentas.Dal.Respositorios.Contrato;
+using SistemaVentas.DTO;
+using SistemaVentas.Model;
+using System.Globalization;
+
+
+
+namespace SistemaVentas.ELL.Servicios
+{
+    public class MenuService : IMenuService
+    {
+        
+        private readonly IGenericRepository<Usuario> _usuarioRepositorio;
+        private readonly IGenericRepository<MenuRol> _menuRolRepositorio;
+        private readonly IGenericRepository<Menu> _menuRepositorio;
+        private readonly IMapper _mapper;
+
+        public MenuService(IGenericRepository<Usuario> usuarioRepositorio, IGenericRepository<MenuRol> menuRolRepositorio, IGenericRepository<Menu> menuRepositorio, IMapper mapper)
+        {
+            _usuarioRepositorio = usuarioRepositorio;
+            _menuRolRepositorio = menuRolRepositorio;
+            _menuRepositorio = menuRepositorio;
+            _mapper = mapper;
+        }
+
+        public async Task<List<MenuDTO>> Lista(int IdUsuario)
+        {
+
+            IQueryable<Usuario> tbUsuario = await _usuarioRepositorio.Consultar(u => u.IdUsuario == IdUsuario);
+            IQueryable<MenuRol> tbMenuRol = await _menuRolRepositorio.Consultar();
+            IQueryable<Menu> tbMenu = await _menuRepositorio.Consultar();
+
+
+            try
+            {
+                IQueryable<Menu> tbResultado = (from u in tbUsuario
+                                                join mr in tbMenuRol on u.IdRol equals mr.IdRol
+                                                join m in tbMenu on mr.IdMenu equals m.IdMenu
+                                                select m).AsQueryable();
+                var ListaMenus = tbResultado.ToList();
+                return _mapper.Map<List<MenuDTO>>(ListaMenus);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+        }
+    }
+}
